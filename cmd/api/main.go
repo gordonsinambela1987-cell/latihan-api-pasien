@@ -20,10 +20,14 @@ func main() {
 	})
 
 	// DAFTARKAN ENDPOINT BARU DI SINI
+	// Enpoin pendaftaran data doctor
+	router.HandleFunc("POST /doctors", handlers.CreateDoctorHandler(dbPool))
 	// Enpoin pendaftaran pasien
 	router.HandleFunc("POST /patients", handlers.CreatePatientHandler(dbPool))
 	// Endpoint untuk mengambil data satu pasien berdasarkan ID
 	router.HandleFunc("GET /patients/{id}", handlers.GetPatientByIDHandler(dbPool))
+	// Endpoint untuk mengambil data doctor
+	router.HandleFunc("GET /doctors", handlers.GetAllDoctorsHandler(dbPool))
 
 	port := ":8080"
 	server := &http.Server{
