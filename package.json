@@ -1,0 +1,7 @@
+{
+  "name": "latihan-api-pasien-go-scripts",
+  "version": "1.0.0",
+  "scripts": {
+    "migrate": "docker exec -i latihan-api-pasien-go-db-1 psql -U postgres -d postgres < ./migrations/001_create_tables.sql"
+  }
+}
