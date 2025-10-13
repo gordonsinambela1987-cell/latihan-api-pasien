@@ -19,15 +19,22 @@ func main() {
 		w.Write([]byte("Selamat Datang di API Pasien v1"))
 	})
 
-	// DAFTARKAN ENDPOINT BARU DI SINI
-	// Enpoin pendaftaran data doctor
-	router.HandleFunc("POST /doctors", handlers.CreateDoctorHandler(dbPool))
-	// Enpoin pendaftaran pasien
+	// --- Endpoints Pasien ---
 	router.HandleFunc("POST /patients", handlers.CreatePatientHandler(dbPool))
-	// Endpoint untuk mengambil data satu pasien berdasarkan ID
 	router.HandleFunc("GET /patients/{id}", handlers.GetPatientByIDHandler(dbPool))
-	// Endpoint untuk mengambil data doctor
+
+	// --- Endpoints Dokter ---
 	router.HandleFunc("GET /doctors", handlers.GetAllDoctorsHandler(dbPool))
+	router.HandleFunc("POST /doctors", handlers.CreateDoctorHandler(dbPool))
+	// --- Endpoints Jadwal Kerja Dokter ---
+	router.HandleFunc("POST /doctors/{id}/schedules", handlers.AddDoctorScheduleHandler(dbPool))
+	router.HandleFunc("GET /doctors/{id}/schedules", handlers.GetDoctorSchedulesHandler(dbPool))
+	router.HandleFunc("POST /doctors/{id}/timeoff", handlers.AddDoctorTimeOffHandler(dbPool))
+
+	// --- Endpoint Janji Temu ---
+	router.HandleFunc("POST /appointments", handlers.CreateAppointmentHandler(dbPool))
+	router.HandleFunc("GET /patients/{id}/appointments", handlers.GetAppointmentsByPatientIDHandler(dbPool))
+	router.HandleFunc("PATCH /appointments/{id}", handlers.RescheduleAppointmentHandler(dbPool))
 
 	port := ":8080"
 	server := &http.Server{
