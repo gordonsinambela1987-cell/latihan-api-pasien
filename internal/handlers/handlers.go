@@ -6,7 +6,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -88,6 +90,10 @@ func CreatePatientHandler(dbpool *pgxpool.Pool) http.HandlerFunc {
 		// Validasi input
 		if len(p.KTPNumber) != 16 {
 			http.Error(w, "Nomor KTP harus 16 digit", http.StatusBadRequest)
+			return
+		}
+		if match, _ := regexp.MatchString("^[0-9]+$", p.KTPNumber); !match {
+			http.Error(w, "Nomor KTP harus berupa angka.", http.StatusBadRequest)
 			return
 		}
 		if len(p.FullName) < 3 {
@@ -180,8 +186,15 @@ func CreateDoctorHandler(dbpool *pgxpool.Pool) http.HandlerFunc {
 			http.Error(w, "NIK dokter harus 10 digit", http.StatusBadRequest)
 			return
 		}
+		if match, _ := regexp.MatchString("^[0-9]+$", d.NIK); !match {
+			http.Error(w, "NIK harus berupa angka.", http.StatusBadRequest)
+		}
 		if len(d.Name) < 3 {
 			http.Error(w, "Nama dokter minimal 3 karakter", http.StatusBadRequest)
+			return
+		}
+		if strings.TrimSpace(d.Specialty) == "" {
+			http.Error(w, "Specialty tidak boleh kosong.", http.StatusBadRequest)
 			return
 		}
 
@@ -454,13 +467,28 @@ func AddDoctorScheduleHandler(dbpool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		// 3. Validasi Data dari Body
+		// Validasi #1: Cek rentang hari
+		if req.DayOfWeek < 1 || req.DayOfWeek > 7 {
+			http.Error(w, "dayOfWeek harus antara 1 (Senin) dan 7 (Minggu).", http.StatusBadRequest)
+			return
+		}
+
+		// Validasi #2 & #3: Cek format waktu
 		timeLayout := "15:04:05" // Format HH:MM:SS
-		if _, err := time.Parse(timeLayout, req.StartTime); err != nil {
+		startTime, err := time.Parse(timeLayout, req.StartTime)
+		if err != nil {
 			http.Error(w, "Format startTime tidak valid atau kosong, harus 'HH:MM:SS'", http.StatusBadRequest)
 			return
 		}
-		if _, err := time.Parse(timeLayout, req.EndTime); err != nil {
+		endTime, err := time.Parse(timeLayout, req.EndTime)
+		if err != nil {
 			http.Error(w, "Format endTime tidak valid atau kosong, harus 'HH:MM:SS'", http.StatusBadRequest)
+			return
+		}
+
+		// Validasi #4: Cek urutan waktu
+		if startTime.After(endTime) || startTime.Equal(endTime) {
+			http.Error(w, "startTime harus sebelum endTime.", http.StatusBadRequest)
 			return
 		}
 
